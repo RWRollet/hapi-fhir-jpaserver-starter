@@ -9,6 +9,7 @@ import ca.uhn.fhir.interceptor.api.IInterceptorService;
 import ca.uhn.fhir.jpa.api.config.DaoConfig;
 import ca.uhn.fhir.jpa.api.dao.DaoRegistry;
 import ca.uhn.fhir.jpa.api.dao.IFhirSystemDao;
+import ca.uhn.fhir.rest.server.FifoMemoryPagingProvider;
 import ca.uhn.fhir.jpa.binstore.BinaryStorageInterceptor;
 import ca.uhn.fhir.jpa.bulk.export.provider.BulkDataExportProvider;
 import ca.uhn.fhir.jpa.interceptor.CascadingDeleteInterceptor;
@@ -30,6 +31,7 @@ import ca.uhn.fhir.narrative.INarrativeGenerator;
 import ca.uhn.fhir.narrative2.NullNarrativeGenerator;
 import ca.uhn.fhir.rest.server.ApacheProxyAddressStrategy;
 import ca.uhn.fhir.rest.server.ETagSupportEnum;
+import ca.uhn.fhir.rest.server.FifoMemoryPagingProvider;
 import ca.uhn.fhir.rest.server.HardcodedServerAddressStrategy;
 import ca.uhn.fhir.rest.server.IncomingRequestAddressStrategy;
 import ca.uhn.fhir.rest.server.RestfulServer;
@@ -216,8 +218,14 @@ public class BaseJpaRestfulServer extends RestfulServer {
      * but makes the server much more scalable.
      */
 
-    setPagingProvider(databaseBackedPagingProvider);
-
+    // setPagingProvider(databaseBackedPagingProvider);
+    // The index exception happens for the FifoMemoryPagingProvider
+    FifoMemoryPagingProvider pagingProvider = new FifoMemoryPagingProvider(10);
+    // Set small default and max page sizes to trigger exception with a minimum of resources
+    pagingProvider.setDefaultPageSize(3);
+    pagingProvider.setMaximumPageSize(6);
+    setPagingProvider(pagingProvider);
+    
     /*
      * This interceptor formats the output using nice colourful
      * HTML output when the request is detected to come from a
